@@ -1,3 +1,4 @@
+const { UserInputError } = require("apollo-server");
 const Author = require("../models/author");
 const Book = require("../models/book");
 
@@ -26,8 +27,10 @@ const resolvers = {
     authorCount: async () => Author.collection.countDocuments(),
   },
   Author: {
-    bookCount: async (root) =>
-      Book.collection.countDocuments({ author: root.id }),
+    bookCount: async (root) => {
+      const books = await Book.find({ author: root.id });
+      return books.length;
+    },
   },
   Book: {
     author: async (root) => {
@@ -49,17 +52,37 @@ const resolvers = {
         author = await author.save();
       }
 
-      const newBook = new Book({ ...args, author: author.id });
-      const savedBook = await newBook.save();
+      let newBook = new Book({
+        title: args.title,
+        published: args.published,
+        genres: args.genres,
+        author,
+      });
 
-      return savedBook;
+      try {
+        newBook = await newBook.save();
+      } catch (error) {
+        throw new UserInputError(error.message, {
+          invalidArgs: args,
+        });
+      }
+
+      return newBook;
     },
 
     editAuthor: async (root, args) => {
-      const author = await Author.findOne({ name: args.name });
+      let author = await Author.findOne({ name: args.name });
       author.born = args.setBornTo;
 
-      return author.save();
+      try {
+        author = await author.save();
+      } catch (error) {
+        throw new UserInputError(error.message, {
+          invalidArgs: args,
+        });
+      }
+
+      return author;
     },
   },
 };
