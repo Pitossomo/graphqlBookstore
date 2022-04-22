@@ -4,6 +4,9 @@ const typeDefs = require("./graphQL/typeDefs");
 const resolvers = require("./graphQL/resolvers");
 const { ApolloServer } = require("apollo-server");
 const User = require("./models/user");
+const jwt = require("jsonwebtoken");
+
+const JWT_SECRET = process.env.JWT_SECRET;
 
 console.log("connecting to", process.env.MONGODB_URI);
 
