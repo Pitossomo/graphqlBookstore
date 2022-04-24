@@ -5,6 +5,9 @@ const Book = require("../models/book");
 const jwt = require("jsonwebtoken");
 const User = require("../models/user");
 
+const { PubSub } = require("graphql-subscriptions");
+const pubsub = new PubSub();
+
 const JWT_SECRET = process.env.JWT_SECRET;
 
 const resolvers = {
@@ -77,6 +80,8 @@ const resolvers = {
         });
       }
 
+      pubsub.publish("BOOK_ADDED", { bookAdded: newBook });
+
       return newBook;
     },
 
@@ -126,6 +131,12 @@ const resolvers = {
       };
 
       return { value: jwt.sign(userForToken, JWT_SECRET) };
+    },
+  },
+
+  Subscription: {
+    bookAdded: {
+      subscribe: () => pubsub.asyncIterator(["BOOK_ADDED"]),
     },
   },
 };
